@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #f4f4f4;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header a {
+            margin-left: 15px;
+            text-decoration: none;
+            color: #333;
+        }
+        header a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            padding: 20px;
+        }
+        .product-view {
+            display: flex;
+            gap: 20px;
+        }
+        .product-view img {
+            max-width: 400px;
+            width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+        }
+        .product-details {
+            max-width: 500px;
+        }
+        .product-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .product-category {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        .product-price {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .product-description {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+        .product-added {
+            font-size: 14px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Market</h1>
+        <nav>
+            <a href="{% url 'products_view' %}">Products</a>
+            <a href="{% url 'product_add_view' %}">Add Product</a>
+            <a href="{% url 'category_add_view' %}">Add Category</a>
+        </nav>
+    </header>
+    <div class="container">
+        <div class="product-view">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            <div class="product-details">
+                <div class="product-title">{{ product.name }}</div>
+                <div class="product-category">{{ product.category.name }}</div>
+                <div class="product-price">Price: {{ product.price }}$</div>
+                <div class="product-description">{{ product.description }}</div>
+                <div class="product-added">Added: {{ product.created_at|date:"d/m/Y H:i" }}</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+[
+    {
+        "model": "store.category",
+        "pk": 1,
+        "fields": {
+            "name": "Электроника",
+            "description": "Гаджеты и устройства"
+        }
+    }
+]
