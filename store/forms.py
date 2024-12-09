@@ -10,7 +10,7 @@ class CategoryForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['title', 'category', 'price', 'description', 'image']
+        fields = ['title', 'category', 'price', 'stock', 'description', 'image']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -31,4 +31,19 @@ class ProductForm(forms.ModelForm):
             'image': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
             }),
+            'stock': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'placeholder': 'Enter product stock',
+            }),
         }
+
+class ProductSearchForm(forms.Form):
+    query = forms.CharField(
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Search products...',
+        })
+    )

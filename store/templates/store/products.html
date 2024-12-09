@@ -75,17 +75,27 @@
         </nav>
     </header>
     <div class="container">
+        <form method="get" class="mb-3">
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+        </div>
         <div class="product-grid">
             {% for product in products %}
                 <div class="product">
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                    <div class="product-title">{{ product.name }}</div>
+                    <img src="{{ product.image.url }}" alt="{{ product.title }}">
+                    <div class="product-title">{{ product.title }}</div>
                     <div class="product-category">{{ product.category.name }}</div>
                     <div class="product-price">Price: {{ product.price }}$</div>
-                    <a href="{% url 'product_view' product.id %}">see more &gt;&gt;&gt;</a>
+                    {% if product.id %}
+                        <a href="{% url 'product_view' product.id %}">see more &gt;&gt;&gt;</a>
+                        <a href="{% url 'product_edit_view' product.id %}" class="btn btn-warning">Edit</a>
+                        <a href="{% url 'product_delete_view' product.id %}" class="btn btn-danger">Delete</a>
+                    {% else %}
+                        <p>Invalid product</p>
+                    {% endif %}
+                    {% endfor %}
                 </div>
-            {% endfor %}
         </div>
-    </div>
 </body>
 </html>
