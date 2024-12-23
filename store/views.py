@@ -1,64 +1,58 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from django.db.models import Q
 from .models import Product, Category
-from .forms import ProductForm, CategoryForm, ProductSearchForm
+from .forms import ProductForm, ProductSearchForm
 
-def products_view(request):
-    form = ProductSearchForm(request.GET or None)
-    products = Product.objects.filter(stock__gte=1).order_by('category__name', 'title')
+class CategoryCreateView(CreateView):
+    model = Category
+    fields = ['name']
+    template_name = 'store/category_add.html'
+    success_url = reverse_lazy('products')
 
-    if form.is_valid() and form.cleaned_data['query']:
-        products = products.filter(title__icontains=form.cleaned_data['query'])
+class ProductListView(ListView):
+    model = Product
+    template_name = 'store/products.html'
+    context_object_name = 'products'
+    paginate_by = 10
 
-    return render(request, 'store/products.html', {'products': products, 'form': form})
+    def get_queryset(self):
+        queryset = Product.objects.filter(stock__gte=1).order_by('category__name', 'title')
+        query = self.request.GET.get('query')
+        if query:
+            queryset = queryset.filter(Q(title__icontains=query) | Q(category__name__icontains=query))
+        return queryset
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = ProductSearchForm(self.request.GET or None)
+        return context
 
-def product_view(request, id):
-    product = get_object_or_404(Product, id=id)
-    return render(request, 'store/product.html', {'product': product})
+class ProductDetailView(DetailView):
+    model = Product
+    template_name = 'store/product.html'
+    context_object_name = 'product'
 
+class ProductCreateView(CreateView):
+    model = Product
+    form_class = ProductForm
+    template_name = 'store/product_add.html'
 
-def category_add_view(request):
-    if request.method == 'POST':
-        form = CategoryForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('products_view')
-    else:
-        form = CategoryForm()
-    return render(request, 'store/category_add.html', {'form': form})
+    def form_valid(self, form):
+        return super().form_valid(form)
 
+    def get_success_url(self):
+        return reverse_lazy('product_view', kwargs={'pk': self.object.pk})
 
-def product_add_view(request):
-    if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            product = form.save(commit=False)
-            if not product.id:
-                product.save()
-            return redirect('product_view', id=product.id)
-    else:
-        form = ProductForm()
-    return render(request, 'store/product_add.html', {'form': form})
+class ProductUpdateView(UpdateView):
+    model = Product
+    form_class = ProductForm
+    template_name = 'store/product_edit.html'
 
-def product_list_view(request):
-    products = Product.objects.all()
-    return render(request, 'store/products.html', {'products': products})
+    def get_success_url(self):
+        return reverse_lazy('product_view', kwargs={'pk': self.object.pk})
 
-def product_edit_view(request, id):
-    product = get_object_or_404(Product, id=id)
-    if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES, instance=product)
-        if form.is_valid():
-            form.save()
-            return redirect('product_view', id=product.id)
-    else:
-        form = ProductForm(instance=product)
-    return render(request, 'store/product_edit.html', {'form': form, 'product': product})
-
-
-def product_delete_view(request, id):
-    product = get_object_or_404(Product, id=id)
-    if request.method == 'POST':
-        product.delete()
-        return redirect('products_view')
-    return render(request, 'store/product_confirm_delete.html', {'product': product})
+class ProductDeleteView(DeleteView):
+    model = Product
+    template_name = 'store/product_confirm_delete.html'
+    success_url = reverse_lazy('products_view')
