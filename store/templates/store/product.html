@@ -79,6 +79,7 @@
         <div class="product-view">
             <img src="{{ product.image.url }}" alt="{{ product.name }}">
             <div class="product-details">
+                <a href="{% url 'add_to_cart' product.pk %}" class="btn btn-primary">Добавить в корзину</a>
                 <div class="product-title">{{ product.name }}</div>
                 <div class="product-category">{{ product.category.name }}</div>
                 <div class="product-price">Price: {{ product.price }}$</div>
