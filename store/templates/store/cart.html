@@ -17,13 +17,24 @@
             <td>{{ item.quantity }}</td>
             <td>{{ item.total_price }}</td>
             <td>
-                <form action="{% url 'remove_one_from_cart' item.pk %}" method="post" style="display: inline;">
+               <form action="{% url 'remove_one_from_cart' item.product.id %}" method="post" style="display: inline;">
+
                     {% csrf_token %}
                     <button type="submit">-</button>
                 </form>
-                <form action="{% url 'remove_from_cart' item.pk %}" method="post" style="display: inline;">
+                <form action="{% url 'remove_from_cart' item.product.id %}" method="post" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit">Удалить</button>
+                </form>
+                <form method="post">
+                    {% csrf_token %}
+                    <label for="id_user_name">Имя:</label>
+                    {{ form.user_name }}
+                    <label for="id_phone">Телефон:</label>
+                    {{ form.phone }}
+                    <label for="id_address">Адрес:</label>
+                    {{ form.address }}
+                    <button type="submit">Оформить заказ</button>
                 </form>
             </td>
         </tr>

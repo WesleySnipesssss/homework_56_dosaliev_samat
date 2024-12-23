@@ -2,10 +2,11 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.db.models import Q
-from .models import Product, Category, CartItem
-from .forms import ProductForm, ProductSearchForm
+from .models import Product, Category, CartItem, Order, OrderProduct, Cart
+from .forms import ProductForm, ProductSearchForm, OrderForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponseRedirect
+
 
 class CategoryCreateView(CreateView):
     model = Category
@@ -60,23 +61,64 @@ class ProductDeleteView(DeleteView):
     template_name = 'store/product_confirm_delete.html'
     success_url = reverse_lazy('products_view')
 
-def add_to_cart(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    quantity = int(request.POST.get('quantity', 1))
-    if product.stock == 0 or quantity <= 0:
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('products_view')))
-    cart_item, created = CartItem.objects.get_or_create(product=product)
-    if not created:
-        cart_item.quantity = min(cart_item.quantity + quantity, product.stock)
+
+def add_to_cart(request, product_id):
+    product = Product.objects.get(id=product_id)
+
+    cart = request.session.get('cart', {})
+
+    if product_id in cart:
+        cart[product_id] += 1
     else:
-        cart_item.quantity = min(quantity, product.stock)
-    cart_item.save()
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('products_view')))
+        cart[product_id] = 1
+
+    request.session['cart'] = cart
+    return redirect('cart_view')
+
 
 def cart_view(request):
-    cart_items = CartItem.objects.all()
-    total = sum(item.product.price * item.quantity for item in cart_items)
-    return render(request, 'store/cart.html', {'cart_items': cart_items, 'total': total})
+    if request.user.is_authenticated:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = CartItem.objects.filter(cart=cart)
+    else:
+        cart = request.session.get('cart', {})
+        cart_items = []
+        for product_id, quantity in cart.items():
+            product = Product.objects.get(id=product_id)
+            cart_items.append({'product': product, 'quantity': quantity})
+
+    total_price = sum(item['product'].price * item['quantity'] for item in cart_items)
+
+    if request.method == "POST":
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            order = form.save(commit=False)
+            order.user_name = request.user.username if request.user.is_authenticated else 'Guest'
+            order.save()
+
+            for cart_item in cart_items:
+                OrderProduct.objects.create(
+                    order=order,
+                    product=cart_item['product'],
+                    quantity=cart_item['quantity']
+                )
+
+            if request.user.is_authenticated:
+                cart_items.delete()
+            else:
+                request.session['cart'] = {}
+
+            return redirect('products_view')
+
+    else:
+        form = OrderForm()
+
+    return render(request, 'store/cart.html', {
+        'cart_items': cart_items,
+        'total_price': total_price,
+        'form': form
+    })
+
 
 def remove_from_cart(request, pk):
     cart_item = get_object_or_404(CartItem, pk=pk)
